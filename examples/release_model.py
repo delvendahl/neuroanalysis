@@ -1,6 +1,6 @@
 from collections import OrderedDict
 import numpy as np
-import pyqtgraph as pg
+import matplotlib.pyplot as plt
 from neuroanalysis.synaptic_release import ReleaseModel
 
 # Sample data from an experiment probing short-term depression in synapses between
@@ -14,14 +14,9 @@ test_amps = [
     (100, [1.0, 0.542218, 0.343102, 0.26175 , 0.222628, 0.225812, 0.201521, 0.164937]),
 ]
 
-pg.mkQApp()
-win = pg.GraphicsLayoutWidget()
-plots = []
-for i in range(len(test_amps)):
-    plots.append(win.addPlot(i, 0))
-    plots[-1].setXLink(plots[0])
-win.show()
-plots[0].setXRange(0, 700)
+fig, plots = plt.subplots(len(test_amps), 1, sharex=True)
+if len(test_amps) == 1:
+    plots = [plots]
 
 # collect into list of (tvals, yvals) pairs
 spike_sets = []
@@ -30,7 +25,7 @@ for i, induction in enumerate(test_amps):
     dt = 1000 / float(freq)
     x = np.arange(len(y)) * dt
     spike_sets.append((x, y))
-    plots[i].plot(x, y, pen=None, symbol='o')
+    plots[i].plot(x, y, 'o')
 
 
 # initialize the model with all gating mechanisms disabled
@@ -38,8 +33,8 @@ model = ReleaseModel()
 dynamics_types = ['Dep', 'Fac', 'UR', 'SMR', 'DSR']
 model.Dynamics = {k:0 for k in dynamics_types}
 
-print "Initial parameters:", model.dict_params
-print "Bounds:", model.dict_bounds
+print("Initial parameters:", model.dict_params)
+print("Bounds:", model.dict_bounds)
 
 
 # Fit the model 5 times. Each time we enable another gating mechanism.
@@ -48,13 +43,15 @@ for k in dynamics_types:
     model.Dynamics[k] = 1
     fit_params.append(model.run_fit(spike_sets))
     
-print "----- fit complete -----"
+print("----- fit complete -----")
 
 for j,params in enumerate(fit_params):
-    print params
+    print(params)
     for i,spikes in enumerate(spike_sets):
         x, y = spikes
         output = model.eval(x, params.values())
         y = output[:,1]
         x = output[:,0]
-        plots[i].plot(x, y, pen=(j,6))
+        plots[i].plot(x, y)
+
+plt.show()

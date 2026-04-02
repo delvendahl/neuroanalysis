@@ -6,9 +6,6 @@ from neuroanalysis.data.dataset import Dataset
 from optoanalysis.analyzers import OptoBaselineAnalyzer
 from aisynphys.analyzers import MPBaselineAnalyzer
 from neuroanalysis.miesnwb import MiesNwb
-import pyqtgraph as pg
-
-pg.dbg()
 
 
 f = "/Users/meganbkratz/Code/ai/example_data/data/2019-06-13_000/slice_000/site_000/2019_06_13_exp1_TH-compressed.nwb"

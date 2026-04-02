@@ -1,12 +1,6 @@
 import numpy as np
-
-import pyqtgraph as pg
+import matplotlib.pyplot as plt
 from neuroanalysis.fitting import PspTrain
-from neuroanalysis.ui.fitting import FitExplorer
-
-pg.dbg()
-
-pg.mkQApp()
 
 t = np.arange(2000) * 1e-4
 
@@ -32,5 +26,8 @@ y = np.random.normal(size=len(t), scale=30e-6) + model.eval(x=t, **args2)
 
 fit = model.fit(y, x=t, params=args, fit_kws=fit_kws, method='leastsq')
 
-ex = FitExplorer(fit)
-ex.show()
+fig, ax = plt.subplots()
+ax.plot(t, y, label='data')
+ax.plot(t, fit.best_fit, label='fit')
+ax.legend()
+plt.show()

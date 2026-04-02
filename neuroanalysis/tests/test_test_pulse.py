@@ -6,12 +6,9 @@ from typing import Literal
 import numpy as np
 import pytest
 from neuron import h
-import pyqtgraph as pg
-
 from neuroanalysis.data import TSeries, PatchClampRecording
 from neuroanalysis.test_pulse import PatchClampTestPulse
 from neuroanalysis.units import pA, mV, uV, MOhm, pF, uF, us, ms, cm, nA, um, mm
-from pyqtgraph.parametertree import ParameterTree, interact
 
 h.load_file('stdrun.hoc')
 
@@ -254,7 +251,6 @@ def create_mock_test_pulse(
     ))
     if plot:
         tp.plot()
-        # pg.plot(pulse, title=f'{mode} command')
     if assert_valid:
         try:
             check_analysis(tp, locals())
@@ -396,22 +392,7 @@ def test_bath_ugly():
 
 
 if __name__ == '__main__':
-    params = interact(
-        create_mock_test_pulse,
-        rmp_soma={'siPrefix': True, 'suffix': 'V'},
-        r_access={'siPrefix': True, 'suffix': 'Ω'},
-        r_input={'siPrefix': True, 'suffix': 'Ω'},
-        c_soma={'siPrefix': True, 'suffix': 'F'},
-        c_pip={'siPrefix': True, 'suffix': 'F'},
-        pamp={'siPrefix': True, 'suffix': 'V/A'},
-        hold={'siPrefix': True, 'suffix': 'V/A'},
-    )
-
-    app = pg.mkQApp()
-    tree = ParameterTree()
-    tree.setParameters(params)
-    tree.show()
-    pg.exec()
+    import matplotlib.pyplot as plt
 
     failures = [
         "dict(pamp=-0.02, pdur=0.01, mode='vc', noise=0, c_soma=8e-11, c_pip=3e-12, r_input=100e6, r_access=100e6)",  # clogged pipette
@@ -429,8 +410,8 @@ if __name__ == '__main__':
         _tp, vc_locals = create_mock_test_pulse(**_kwds)
         print(title)
         print(_tp.clamp_mode, _tp.plot_units, _tp.analysis['time_constant'])
-        plt = _tp.plot()
-        plt.setTitle(f"tau: {_tp.analysis['time_constant']}, nrmse: {_tp.main_fit_result['nrmse']}")
+        ax = _tp.plot()
+        ax.set_title(f"tau: {_tp.analysis['time_constant']}, nrmse: {_tp.main_fit_result['nrmse']}")
         print(f"tp.analysis: {_tp.analysis}")
-        pg.exec()
+        plt.show()
         check_analysis(_tp, _kwds)

@@ -3,7 +3,6 @@ import numpy as np
 import pytest
 import neuroanalysis.data
 from neuroanalysis.fitting.psp import fit_psp, PspFitTestCase
-from neuroanalysis.ui.psp_fitting import PspFitTestUi
 
 
 
@@ -15,18 +14,10 @@ test_ui = None
 
 @pytest.mark.parametrize('test_file', psp_files)
 def test_psp_fitting(request, test_file):
-    global test_ui
-    audit = request.config.getoption('audit')
-    if audit and test_ui is None:
-        test_ui = PspFitTestUi()
-
     print("test:", test_file)
     tc = PspFitTestCase()
     tc.load_file(test_file)
-    if audit:
-        tc.audit_test(test_ui)
-    else:
-        tc.run_test()
+    tc.run_test()
 
 
 

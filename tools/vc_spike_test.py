@@ -1,7 +1,6 @@
 import numpy as np
 import scipy.ndimage as ndi
-import pyqtgraph as pg
-from neuroanalysis.ui.plot_grid import PlotGrid
+import matplotlib.pyplot as plt
 from neuroanalysis.spike_detection import detect_vc_evoked_spikes
 from neuroanalysis.data import TSeries
 
@@ -13,14 +12,8 @@ dt = 20e-6
 # gaussian filtering constant
 sigma = 20e-6 / dt
 
-# Initialize Qt
-pg.mkQApp()
-pg.dbg()
-
 # Create a window with a grid of plots (N rows, 1 column)
-win = PlotGrid()
-win.set_shape(data.shape[0], 1)
-win.show()
+fig, axes = plt.subplots(data.shape[0], 1, sharex=True, figsize=(10, 2 * data.shape[0]))
 
 # Loop over all 10 channels
 for i in range(data.shape[0]):
@@ -29,15 +22,7 @@ for i in range(data.shape[0]):
     stim = data[i, :, 1]
 
     # select the plot we will use for this trace
-    plot = win[i, 0]
-
-    # link all x-axes together
-    plot.setXLink(win[0, 0])
-    xaxis = plot.getAxis('bottom')
-    if i == data.shape[0]-1:
-        xaxis.setLabel('Time', 's')
-    else:
-        xaxis.hide()
+    ax = axes[i]
 
     # use stimulus to find pulse edges
     diff = np.diff(stim)   # np.diff() gives first derivative
@@ -51,8 +36,8 @@ for i in range(data.shape[0]):
 
     # plot the selected chunk
     t = np.arange(chunk.shape[0]) * dt
-    plot.plot(t[:-1], np.diff(ndi.gaussian_filter(chunk, sigma)), pen=0.5)
-    plot.plot(t, chunk)
+    ax.plot(t[:-1], np.diff(ndi.gaussian_filter(chunk, sigma)), color='0.5', alpha=0.5)
+    ax.plot(t, chunk)
 
     # detect spike times
     peak_inds = []
@@ -66,10 +51,14 @@ for i in range(data.shape[0]):
             rise_inds.append(spike_info['rise_index'])
 
     # display spike rise and peak times as ticks
-    pticks = pg.VTickGroup(np.array(peak_inds) * dt, yrange=[0, 0.3], pen='r')
-    rticks = pg.VTickGroup(np.array(rise_inds) * dt, yrange=[0, 0.3], pen='y')
-    plot.addItem(pticks)
-    plot.addItem(rticks)
+    for p_ind in peak_inds:
+        ax.axvline(p_ind * dt, color='r', alpha=0.5)
+    for r_ind in rise_inds:
+        ax.axvline(r_ind * dt, color='y', alpha=0.5)
+
+axes[-1].set_xlabel('Time (s)')
+plt.tight_layout()
+plt.show()
     
     
     

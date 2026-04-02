@@ -1,20 +1,19 @@
 import numpy as np
 from neuroanalysis.fitting import Gaussian, SearchFit
-import pyqtgraph as pg
-pg.dbg()
+import matplotlib.pyplot as plt
 
 # make some noise with a gaussian bump
 model = Gaussian()
 x = np.linspace(0, 100, 1000)
 y = np.random.normal(size=len(x)) + model.eval(x=x, xoffset=71, yoffset=0, sigma=5, amp=10)
 
-plt = pg.plot()
-plt.plot(x, y, pen=0.5)
+fig, ax = plt.subplots()
+ax.plot(x, y, color='0.5', label='data')
 
 # If we attempt to fit with xoffset bounded between 0 and 100, it is likely
 # the fit will fail:
 fit = model.fit(data=y, x=x, params={'xoffset': (50, 0, 100), 'yoffset': 0, 'amp': (0, -50, 50), 'sigma': (5, 1, 20)})
-plt.plot(x, fit.best_fit, pen='r')
+ax.plot(x, fit.best_fit, color='r', label='bad fit')
 
 # Instead, brute-force search for the best fit over multiple ranges for xoffset and amp:
 amp = [{'amp': (-10, -50, 0)}, {'amp': (10, 0, 50)}]
@@ -24,12 +23,10 @@ xoffset = [{'xoffset':(x+5, x, x+10)} for x in range(0, 100, 10)]
 search = SearchFit(model, [amp, xoffset], params={'sigma': (5, 1, 20), 'yoffset': 0}, x=x, data=y)
 
 # Optionally, let the user know how the fit is progressing:
-with pg.ProgressDialog("Fitting...", maximum=len(search)) as dlg:
-    for result in search.iter_fit():
-        print("Init params this iteration:", result['params'])
-        dlg += 1
-        if dlg.wasCanceled():
-            raise Exception("User canceled fit")
+for result in search.iter_fit():
+    print("Init params this iteration:", result['params'])
         
-plt.plot(x, search.best_result.best_fit, pen='g')
+ax.plot(x, search.best_result.best_fit, color='g', label='search fit')
+ax.legend()
 print("Best fit parameters:", search.best_result.best_values)
+plt.show()

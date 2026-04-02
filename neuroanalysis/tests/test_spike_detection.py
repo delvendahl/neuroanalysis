@@ -6,7 +6,6 @@ from neuroanalysis.data import Recording, TSeries
 from neuroanalysis.neuronsim.model_cell import ModelCell
 from neuroanalysis.units import pA, mV, MOhm, pF, us, ms
 from neuroanalysis.spike_detection import SpikeDetectTestCase, detect_evoked_spikes
-from neuroanalysis.ui.spike_detection import SpikeDetectTestUi
 
 path = os.path.join(os.path.dirname(neuroanalysis.__file__), '..', 'test_data', 'evoked_spikes', '*.pkl')
 spike_files = sorted(glob.glob(path))
@@ -16,18 +15,10 @@ test_ui = None
 
 @pytest.mark.parametrize('test_file', spike_files)
 def test_spike_detection(request, test_file):
-    global test_ui
-    audit = request.config.getoption('audit')
-    if audit and test_ui is None:
-        test_ui = SpikeDetectTestUi()
-
     print("test:", test_file)
     tc = SpikeDetectTestCase()
     tc.load_file(test_file)
-    if audit:
-        tc.audit_test(test_ui)
-    else:
-        tc.run_test()
+    tc.run_test()
 
 
 def test_model_spike_detection():
@@ -72,16 +63,16 @@ def create_test_pulse(start=5*ms, pdur=10*ms, pamp=-10*pA, mode='ic', dt=10*us, 
 
 
 if __name__ == '__main__':
-    import pyqtgraph as pg
-    from neuroanalysis.spike_detection import SpikeDetectUI
+    import matplotlib.pyplot as plt
 
-    plt = pg.plot(labels={'left': ('Vm', 'V'), 'bottom': ('time', 's')})
     dt = 10*us
     start = 5*ms
     duration = 2*ms
     pulse_edges = start, start + duration
 
-    ui = SpikeDetectUI()
+    fig, ax = plt.subplots()
+    ax.set_ylabel('Vm (V)')
+    ax.set_xlabel('time (s)')
 
     def test_pulse(amp, ra):
         # Simulate pulse response
@@ -90,12 +81,13 @@ if __name__ == '__main__':
         # Test spike detection
         pri = resp['primary']
         pri.t0 = 0
-        spikes = detect_evoked_spikes(resp, pulse_edges, ui=ui)
+        spikes = detect_evoked_spikes(resp, pulse_edges)
         print(spikes)
-        pen = ['r', 'y', 'g', 'b'][len(spikes)]
+        colors = ['r', 'y', 'g', 'b']
+        color = colors[min(len(spikes), len(colors)-1)]
 
         # plot in green if a spike was detected
-        plt.plot(pri.time_values, pri.data, pen=pen)
+        ax.plot(pri.time_values, pri.data, color=color)
 
     # Iterate over a series of increasing pulse amplitudes
     for ra in [10*MOhm, 100*MOhm]:
@@ -103,6 +95,5 @@ if __name__ == '__main__':
             print("Amp: %f   Raccess: %f" % (amp, ra))
             test_pulse(amp, ra)
 
-            # redraw after every new test
-            pg.QtWidgets.QApplication.processEvents()
+    plt.show()
         

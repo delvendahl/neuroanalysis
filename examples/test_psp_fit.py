@@ -1,14 +1,10 @@
 import sys
 import json
 import numpy as np
-import pyqtgraph as pg
+import matplotlib.pyplot as plt
 from collections import OrderedDict
 from neuroanalysis.fitting import Psp
-from neuroanalysis.ui.fitting import FitExplorer
 
-
-pg.mkQApp()
-pg.dbg()
 
 # Load PSP data from the test_data repository
 if len(sys.argv) == 1:
@@ -34,5 +30,8 @@ params = OrderedDict([
 fit = psp.fit(y, x=x, xtol=1e-3, maxfev=100, params=params)
 
 
-x = FitExplorer(fit=fit)
-x.show()
+fig, ax = plt.subplots()
+ax.plot(x, y, label='data')
+ax.plot(x, fit.best_fit, label='fit')
+ax.legend()
+plt.show()
