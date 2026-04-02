@@ -2,7 +2,6 @@ import contextlib
 import numpy as np
 import warnings
 
-import pyqtgraph as pg
 from .data import PatchClampRecording, TSeries
 from .fitting.exp import exp_fit
 from .stimuli import find_square_pulses, SquarePulse
@@ -317,33 +316,33 @@ class PatchClampTestPulse(PatchClampRecording):
     def plot_title(self):
         return 'current' if self.clamp_mode == 'vc' else 'potential'
 
-    def plot(self, plt=None, label=True):
+    def plot(self, ax=None, label=True):
+        import matplotlib.pyplot as plt
         assert self.analysis is not None
-        if plt is None:
-            plt = pg.plot(labels={'left': (self.plot_title, self.plot_units), 'bottom': ('time', 's')})
-            plt.addLegend()
-        plt.plot(self['primary'].time_values, self['primary'].data, name="raw")
-        if self.fit_trace_with_transient is not None:
-            plt.plot(self.fit_trace_with_transient.time_values, self.fit_trace_with_transient.data, pen='b', name="fit w/ trans")
-        plt.plot(self.main_fit_trace.time_values, self.main_fit_trace.data, pen='r', name="first fit")
-        if label:
-            self.label_for_plot(plt.getPlotItem())
-        return plt
+        if ax is None:
+            fig, ax = plt.subplots()
+            ax.set_ylabel(f"{self.plot_title} ({self.plot_units})")
+            ax.set_xlabel("time (s)")
 
-    def label_for_plot(self, plt):
+        ax.plot(self['primary'].time_values, self['primary'].data, label="raw")
+        if self.fit_trace_with_transient is not None:
+            ax.plot(self.fit_trace_with_transient.time_values, self.fit_trace_with_transient.data, 'b', label="fit w/ trans")
+        if self.main_fit_trace is not None:
+            ax.plot(self.main_fit_trace.time_values, self.main_fit_trace.data, 'r', label="first fit")
+
+        ax.legend()
+        if label:
+            self.label_for_plot(ax)
+        return ax
+
+    def label_for_plot(self, ax):
         asymptote = self.analysis['fit_yoffset']
-        plt.addItem(pg.InfiniteLine(
-            (0, asymptote),
-            angle=0,
-            pen=pg.mkPen((180, 180, 240), dash=[3, 4]),
-        ))
+        ax.axhline(asymptote, color=(0.7, 0.7, 0.9), linestyle='--')
+
         abbrevs = self._analysis_labels()
-        text = "Estimated:<br/>" + "<br/>".join([
-            f"{abbrevs[key][1]}: {pg.siFormat(val, suffix=abbrevs[key][0])}"
+        text = "Estimated:\n" + "\n".join([
+            f"{abbrevs[key][1]}: {val:.3g} {abbrevs[key][0]}"
             for key, val in self.analysis.items()
             if val is not None and key in abbrevs
         ])
-        label = pg.LabelItem(text.strip(), color=(180, 180, 240))
-        label.setParentItem(plt.vb)
-        label.setPos(5, 5)
-        return label
+        ax.text(0.05, 0.95, text.strip(), transform=ax.transAxes, verticalalignment='top', color=(0.5, 0.5, 0.7))

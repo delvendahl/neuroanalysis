@@ -117,35 +117,26 @@ plot_window = None
 
 
 def plot_test_result(y, params, fit):
-    global plot_window
-    import pyqtgraph as pg
+    import matplotlib.pyplot as plt
+    fig, (ax1, ax2) = plt.subplots(2, 1)
 
-    if plot_window is None:
-        plot_window = pg.GraphicsLayoutWidget()
-        plot_window.plt1 = plot_window.addPlot(0, 0)
-        plot_window.plt2 = plot_window.addPlot(1, 0)
-    plot_window.show()
-
-    plt1 = plot_window.plt1
-    plt1.addLegend()
-    plt2 = plot_window.plt2
-
-    plt1.plot(y.time_values, y.data, pen='w', label='data', name='data')
-    plt1.setTitle(
-        f"tau: {params['tau']:0.2g} yoffset: {params['yoffset']:0.2g} yscale: {params['yscale']:0.2g}"
-        f" nrmse: {fit['nrmse']:0.2g}")  # err_std: {fit['err_std']:0.2g}")
-    plt1.plot(y.time_values, fit['model'](y.time_values), pen='r', label='fit', name='fit')
+    ax1.plot(y.time_values, y.data, 'w', label='data')
+    ax1.set_title(
+        f"tau: {params['tau']:0.2g} yoffset: {params['yoffset']:0.2g} yscale: {params['yscale']:0.2g}\n"
+        f" nrmse: {fit['nrmse']:0.2g}")
+    ax1.plot(y.time_values, fit['model'](y.time_values), 'r', label='fit')
 
     target_y = exp_decay(y.time_values, **params)
-    plt1.plot(y.time_values, target_y, pen='b', label='target', name='target')
+    ax1.plot(y.time_values, target_y, 'b', label='target')
+    ax1.legend()
 
     taus, errs = calc_exp_error_curve(params['tau'], y)
-    plt2.plot(taus, errs)
-    plt2.addLine(x=params['tau'], pen='g')
-    plt2.addLine(x=fit['fit'][2], pen='r')
+    ax2.plot(taus, errs)
+    ax2.axvline(x=params['tau'], color='g')
+    ax2.axvline(x=fit['fit'][2], color='r')
     if 'memory' in fit:
-        plt2.plot(list(fit['memory'].keys()), [m[2] for m in fit['memory'].values()], pen=None, symbol='o', symbolPen='r')
-    pg.exec()
+        ax2.plot(list(fit['memory'].keys()), [m[2] for m in fit['memory'].values()], 'ro')
+    plt.show()
 
 
 if __name__ == '__main__':

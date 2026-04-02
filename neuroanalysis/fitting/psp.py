@@ -178,7 +178,7 @@ class Psp2(FitModel):
         return out
 
 
-def fit_psp(data, search_window, clamp_mode, sign=0, exp_baseline=True, baseline_like_psp=False, refine=True, init_params=None, decay_tau_bounds=None, rise_time_bounds=None, fit_kws=None, ui=None, max_nfev=500):
+def fit_psp(data, search_window, clamp_mode, sign=0, exp_baseline=True, baseline_like_psp=False, refine=True, init_params=None, decay_tau_bounds=None, rise_time_bounds=None, fit_kws=None, max_nfev=500):
     """Fit a Trace instance to a StackedPsp model.
     
     This function is a higher-level interface to StackedPsp.fit:    
@@ -222,17 +222,6 @@ def fit_psp(data, search_window, clamp_mode, sign=0, exp_baseline=True, baseline
     fit : lmfit.model.ModelResult
         Best fit
     """           
-    import pyqtgraph as pg
-    prof = pg.debug.Profiler(disabled=True, delayed=False)
-    prof("args: %s %s %s %s %s %s %s %s" % (search_window, clamp_mode, sign, exp_baseline, baseline_like_psp, refine, init_params, fit_kws))
-    
-    if ui is not None:
-        ui.clear()
-        ui.console.setStack()
-        ui.plt1.plot(data.time_values, data.data)
-        ui.plt1.addLine(x=search_window[0], pen=0.3)
-        ui.plt1.addLine(x=search_window[1], pen=0.3)
-        prof('plot')
 
     if fit_kws is None:
         fit_kws = {}
@@ -344,21 +333,13 @@ def fit_psp(data, search_window, clamp_mode, sign=0, exp_baseline=True, baseline
     xoffset_chunks = np.linspace(search_window[0], search_window[1], n_xoffset_chunks+1)
     xoffset = [{'xoffset': ((a+b)/2., a, b)} for a,b in zip(xoffset_chunks[:-1], xoffset_chunks[1:])]
     
-    prof('prep for coarse fit')
-
     # Find best coarse fit 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         search = SearchFit(psp, [xoffset], params=base_params, x=data.time_values, data=data.data, fit_kws=fit_kws, max_nfev=max_nfev, method=method)
     for i,result in enumerate(search.iter_fit()):
         pass
-        # prof('  coarse fit iteration %d/%d: %s %s' % (i, len(search), result['param_index'], result['params']))
     fit = search.best_result.best_values
-    prof("coarse fit done (%d iter)" % len(search))
-
-    if ui is not None:
-        br = search.best_result
-        ui.plt1.plot(data.time_values, br.best_fit, pen=(0, 255, 0, 100))
 
     if not refine:
         return search.best_result
@@ -394,17 +375,13 @@ def fit_psp(data, search_window, clamp_mode, sign=0, exp_baseline=True, baseline
         amp = [{'amp': (amp_init, -amp_max, amp_max)}, {'amp': (-amp_init, -amp_max, amp_max)}]
         search_params.append(amp)
 
-    prof("prepare for fine fit %r" % base_params)
-
     # Find best fit 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         search = SearchFit(psp, search_params, params=base_params, x=data.time_values, data=data.data, fit_kws=fit_kws, method=method)
     for i,result in enumerate(search.iter_fit()):
         pass
-        prof('  fine fit iteration %d/%d: %s %s' % (i, len(search), result['param_index'], result['params']))
     fit = search.best_result
-    prof('fine fit done (%d iter)' % len(search))
 
     return fit
 

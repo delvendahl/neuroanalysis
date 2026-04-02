@@ -3,7 +3,7 @@ Demo of simple neuron simulator used for testing analysis routines.
 """
 
 import numpy as np
-import pyqtgraph as pg
+import matplotlib.pyplot as plt
 
 import neuroanalysis.neuronsim as nsim
 from neuroanalysis.units import MOhm, ms, us, pA, mS, cm, mV, um
@@ -40,8 +40,9 @@ a = sim.run(5000)
 pulse_dur = 100*ms
 pulse_amps = np.linspace(-100, 100, 7) * pA
 
-app = pg.mkQApp()
-plot = pg.plot(labels={'left': ('soma.V', 'V'), 'bottom': ('time', 's')})
+fig, ax = plt.subplots()
+ax.set_ylabel('soma.V (V)')
+ax.set_xlabel('time (s)')
 
 for i,pulse_amp in enumerate(pulse_amps):
     # generate command
@@ -63,5 +64,6 @@ for i,pulse_amp in enumerate(pulse_amps):
     # plot
     t = response['t']
     v = response['soma.V']
-    plot.plot(t - t[0], v, pen=(i, len(pulse_amps)*1.5), antialias=True)
-    app.processEvents()
+    ax.plot(t - t[0], v)
+
+plt.show()
